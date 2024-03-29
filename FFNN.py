@@ -9,7 +9,13 @@ class FFNNLayer():
 
 
 class FFNN():
-    def __init__(self, input_size, layers: list, weights: list):
+    """
+    initialize the model,
+    input_size: int is the size of input to be received
+    layers:list of FFNNLayer that specifies each layer's neuron count and activation function
+    weights: list of weight on each layer
+    """
+    def __init__(self, input_size: int, layers: list, weights: list):
         self.input_size = input_size
         self.number_of_layers = len(layers)
         self.layers = layers
@@ -18,6 +24,9 @@ class FFNN():
         self.Y_expected = None
         self.weights = [np.array(l) for l in weights]
 
+    """
+    fit the test x and y_expected to the model
+    """
     def fit(self, x:list, y_expected=None):
         if y_expected is None:
             y_expected = []
@@ -26,6 +35,11 @@ class FFNN():
             self.X.append(np.array(el))
         self.Y_expected = y_expected
 
+    """
+    calculates the output by doing forward propagation
+    
+    return output of each X
+    """
     def predict(self):
         res = self.X
         for i in range(self.number_of_layers):
