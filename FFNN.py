@@ -1,7 +1,8 @@
 import numpy as np
 from utils import relu, sigmoid
 
-class FFNNLayer():
+
+class FFNNLayer:
     def __init__(self, number_of_neurons: int, activation_function: str):
         """
         :param number_of_neurons:
@@ -11,7 +12,7 @@ class FFNNLayer():
         self.activation_function = activation_function
 
 
-class FFNN():
+class FFNN:
     def __init__(self, input_size: int, layers: list, weights: list):
         """
         initializes the model
