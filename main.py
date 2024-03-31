@@ -1,8 +1,10 @@
 from FFNN import FFNNLayer, FFNN
+from FFNNVisualizer import FFNNVisualizer
+
 if __name__ == '__main__':
     # to do ask for json filename
     layers = [
-        FFNNLayer(3, 'relu'),
+        FFNNLayer(4, 'relu'),
         FFNNLayer(3, 'relu'),
         FFNNLayer(2, 'relu'),
         FFNNLayer(1, 'sigmoid')
@@ -29,8 +31,11 @@ if __name__ == '__main__':
         ],
         [[0.1], [-0.2], [0.3]]
     ]
-    model = FFNN(2, layers, weights)
+    model = FFNN(3, layers, weights)
     model.fit([[-1.0, 0.5, 0.8]])
+
+    visualizer = FFNNVisualizer(model)
+    visualizer.visualize()
 
     # to do: rapiin output
     print(model.predict())
