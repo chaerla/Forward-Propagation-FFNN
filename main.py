@@ -20,20 +20,19 @@ if __name__ == '__main__':
       input_size = data["case"]["model"]["input_size"]
       input_x = data["case"]["input"]
       expected_output = data["expect"]["output"]
-      print(expected_output)
 
       model = FFNN(input_size, layers, weights)
       model.fit(input_x, expected_output)
+      model.print_expected_output()
       visualizer = FFNNVisualizer(model)
       visualizer.visualize()
 
-      # to do: rapiin output
       result = model.predict()
-      print(result)
+      model.print_prediction_results()
 
       max_sse = data["expect"]["max_sse"]
       sse = model.calculate_sse()
-      print("Sum Squared Error:", sse)
+      print(f"Sum Squared Error: {sse:.4f}")
       if sse < max_sse:
           print("Sum Squared Error(SSE) of prediction is lower than Maximum SSE")
       else:
