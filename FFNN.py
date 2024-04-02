@@ -1,5 +1,5 @@
 import numpy as np
-from utils import relu, sigmoid
+from utils import linear, relu, sigmoid, softmax
 
 
 class FFNNLayer:
@@ -54,10 +54,14 @@ class FFNN:
             res = [np.insert(x, 0, 1) for x in res]
             net = [np.matmul(x, self.weights[i]) for x in res]
             act_func = self.layers[i].activation_function
+            if act_func == 'linear':
+                res = [linear(x) for x in net]
             if act_func == 'relu':
                 res = [relu(n) for n in net]
             if act_func == 'sigmoid':
                 res = [sigmoid(n) for n in net]
+            if act_func =="softmax":
+                res = [softmax(n) for n in net]
         self.prediction = res
         return res
 
@@ -71,3 +75,30 @@ class FFNN:
         squared_error = (expected - self.prediction[0]) ** 2
         sum_squared_error = np.sum(squared_error)
         return sum_squared_error
+    
+    def print_expected_output(self):
+        """
+        prints the expected output in a formatted way.
+
+        :return: void
+        """
+        print(f"Expected Output:")
+        for i, val in enumerate(self.Y_expected):
+            print(f"  Output {i+1}: {val[0]:.4f}")
+        print("-" * 20)  # Separator 
+
+    def print_prediction_results(self):
+        """
+        prints the prediction results in a formatted way.
+
+        :return: void
+        """
+        for i, result in enumerate(self.prediction):
+            print(f"Prediction Result:")
+            if isinstance(result, np.ndarray):
+                for j, val in enumerate(result.flatten()): 
+                    print(f"  Output {j+1}: {val:.4f}")
+            else:
+                print(f"  Output: {result:.4f}")
+            print("-" * 20)  # Separator 
+        
