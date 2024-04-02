@@ -83,8 +83,9 @@ class FFNN:
         :return: void
         """
         print(f"Expected Output:")
-        for i, val in enumerate(self.Y_expected):
-            print(f"  Output {i+1}: {val[0]:.4f}")
+        for i, sublist in enumerate(self.Y_expected):
+            for j, val in enumerate(sublist):
+                print(f"Output {j+1}: {val:.4f}")
         print("-" * 20)  # Separator 
 
     def print_prediction_results(self):
