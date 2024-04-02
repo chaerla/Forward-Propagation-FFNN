@@ -26,6 +26,7 @@ class FFNN:
         self.layers = layers
         self.X = []
         self.Y = []
+        self.prediction = None
         self.Y_expected = None
         self.weights = [np.array(l) for l in weights]
 
@@ -57,8 +58,16 @@ class FFNN:
                 res = [relu(n) for n in net]
             if act_func == 'sigmoid':
                 res = [sigmoid(n) for n in net]
+        self.prediction = res
         return res
 
+    def calculate_sse(self):
+        """
+        calculate Sum Squared Error (SSE) of result and expected
 
-
-
+        :return: sum squared error
+        """
+        expected = np.array(self.Y_expected[0])
+        squared_error = (expected - self.prediction[0]) ** 2
+        sum_squared_error = np.sum(squared_error)
+        return sum_squared_error

@@ -1,41 +1,44 @@
 from FFNN import FFNNLayer, FFNN
 from FFNNVisualizer import FFNNVisualizer
+import json
 
 if __name__ == '__main__':
-    # to do ask for json filename
-    layers = [
-        FFNNLayer(4, 'relu'),
-        FFNNLayer(3, 'relu'),
-        FFNNLayer(2, 'relu'),
-        FFNNLayer(1, 'sigmoid')
-    ]
-    weights = [
-        [
-            [0.1, 0.2, 0.3, -1.2],
-            [-0.5, 0.6, 0.7, 0.5],
-            [0.9, 1.0, -1.1, -1.0],
-            [1.3, 1.4, 1.5, 0.1]
-        ],
-        [
-            [0.1, 0.1, 0.3],
-            [-0.4, 0.5, 0.6],
-            [0.7, 0.4, -0.9],
-            [0.2, 0.3, 0.4],
-            [-0.1, 0.2, 0.1]
-        ],
-        [
-            [0.1, 0.2],
-            [-0.3, 0.4],
-            [0.6, 0.1],
-            [0.1, -0.4]
-        ],
-        [[0.1], [-0.2], [0.3]]
-    ]
-    model = FFNN(3, layers, weights)
-    model.fit([[-1.0, 0.5, 0.8]])
+    file_path = input("Enter json file path: ")
+    f = open(file_path)
+    data = json.load(f)
 
-    visualizer = FFNNVisualizer(model)
-    visualizer.visualize()
+    try:
+      data_layers = data["case"]["model"]["layers"]
+      layers = []
+      for layer in data_layers:
+        activation_func = layer["activation_function"]
+        if activation_func not in ["linear", "relu", "sigmoid", "softmax"]:
+          raise Exception("Activation function " + activation_func + " not available")
+        layers.append(FFNNLayer(layer["number_of_neurons"], activation_func))
 
-    # to do: rapiin output
-    print(model.predict())
+      weights = data["case"]["weights"]
+      input_size = data["case"]["model"]["input_size"]
+      input_x = data["case"]["input"]
+      expected_output = data["expect"]["output"]
+      print(expected_output)
+
+      model = FFNN(input_size, layers, weights)
+      model.fit(input_x, expected_output)
+      visualizer = FFNNVisualizer(model)
+      visualizer.visualize()
+
+      # to do: rapiin output
+      result = model.predict()
+      print(result)
+
+      max_sse = data["expect"]["max_sse"]
+      sse = model.calculate_sse()
+      print("Sum Squared Error:", sse)
+      if sse < max_sse:
+          print("Sum Squared Error(SSE) of prediction is lower than Maximum SSE")
+      else:
+          print("Sum Squared Error(SSE) of prediction surpass the Maximum SSE")
+    except KeyError as ke:
+      print('Key', ke, "not found in json data. Please check your json data format")
+    except Exception as error:
+      print("An exception occurred: ", error)
