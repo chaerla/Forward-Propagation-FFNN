@@ -95,6 +95,8 @@ class FFNN:
         :return: void
         """
         print(f"Prediction Result:")
+        np.set_printoptions(precision=4, suppress=True)
+        print(self.Y)
         for i, result in enumerate(self.prediction):
             print(f"Input {i+1}:")
             if isinstance(result, np.ndarray):
