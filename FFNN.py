@@ -85,7 +85,7 @@ class FFNN:
         print(f"Expected Output:")
         for i, sublist in enumerate(self.Y_expected):
             for j, val in enumerate(sublist):
-                print(f"Output {j+1}: {val:.4f}")
+                print(f"Output {i+1}.{j+1}: {val:.4f}")
         print("-" * 20)  # Separator 
 
     def print_prediction_results(self):
@@ -94,11 +94,12 @@ class FFNN:
 
         :return: void
         """
+        print(f"Prediction Result:")
         for i, result in enumerate(self.prediction):
-            print(f"Prediction Result:")
+            print(f"Input {i+1}:")
             if isinstance(result, np.ndarray):
                 for j, val in enumerate(result.flatten()): 
-                    print(f"  Output {j+1}: {val:.4f}")
+                    print(f"  Output {i+1}.{j+1}: {val:.4f}")
             else:
                 print(f"  Output: {result:.4f}")
             print("-" * 20)  # Separator 
