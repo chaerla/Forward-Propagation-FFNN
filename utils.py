@@ -33,3 +33,25 @@ def get_random_pale_color():
 
 def sigmoid_net_gradient(x):
     return x * (1-x)
+
+def relu_net_gradient(x):
+    if x < 0:
+        return 0
+    else:
+        return 1
+
+def linear_net_gradient(x):
+    return 1
+
+def softmax_net_gradient(p, targetIdx):
+    # target nya uda jadi index
+    gradient = p.copy()
+    gradient[targetIdx] = gradient[targetIdx] - 1 
+    return gradient
+
+def softmax_net_gradient2(p, target):
+    # target nya belum ada index
+    idx = target.index(max(target))
+    gradient = p.copy()
+    gradient[idx] = p[idx] - 1
+    return gradient
