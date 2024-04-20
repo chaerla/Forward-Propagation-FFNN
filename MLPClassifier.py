@@ -14,7 +14,7 @@ class FFNNLayer:
 
 
 class MLPClassifier:
-    def __init__(self, layers: list, learning_rate, error_threshold, max_iter, batch_size):
+    def __init__(self, layers: list, learning_rate, error_threshold, max_iter, batch_size, weights):
         """
         :param layers: list of FFNNLayer to specify the activation function and num of neurons for each layers
         :param learning_rate: the learning rate
@@ -32,10 +32,15 @@ class MLPClassifier:
         self.X_train = []
         self.y_train = []
         self.neuron_values = []
-        self.weights = []
+        self.weights = [weight[1:] for weight in weights]
+        self.bias_weights = [weight[0] for weight in weights]
         self.prediction = []
         self.num_of_features = 0
         self.num_of_batches = 0
+        self.d_weights = None
+        self.d_bias_weights = None
+        # todo: rapiin sesusai input dari file + simpan stop by apa (@livia)
+
 
     def fit(self, X_train, y_train):
         self.X_train = X_train
@@ -44,17 +49,7 @@ class MLPClassifier:
         self.num_of_batches = math.ceil(len(self.X_train) / self.batch_size)
 
         # the first neuron is the X inputs themselves
-        self.neuron_values = [[None for j in range(layer.number_of_neurons)] for layer in self.layers]
-
-        # prep the initial weights
-        for i in range(self.num_of_layers):
-            num_of_source_neurons = len(self.X_train[0]) if i == 0 else self.layers[i - 1].number_of_neurons
-            num_of_target_neurons = self.layers[i].number_of_neurons
-            self.weights.append(self.__initialize_layer_weight(num_of_source_neurons, num_of_target_neurons))
-
-    def predict(self):
-        if self.X_train is None or self.y_train is None:
-            raise Exception("Model is not fitted yet")
+        self.neuron_values = [[None for _ in range(layer.number_of_neurons)] for layer in self.layers]
         num_iter = 0
         while self.error_sum > self.error_threshold and num_iter < self.max_iter:
             num_of_batches = math.ceil(len(self.X_train) / self.batch_size)
@@ -62,13 +57,23 @@ class MLPClassifier:
                 self.__forward(i)
                 self.__backward(i)
                 # todo: update error (@chow)
-            num_iter += 1
+                # jujur ga tau harusnya di bagian mana wkakwoka
 
-    def __forward(self, batch_num):
-        res = self.X_train
+            num_iter += 1
+        print(self.weights)
+        print(self.bias_weights)
+
+    def predict(self):
+        """
+        todo @livia
+        """
+        return 0
+
+    def __forward(self, batch):
+        start_idx = self.batch_size * batch
+        res = self.X_train[start_idx:start_idx + self.__get_curr_batch_size(batch)]
         for i in range(self.num_of_layers):
-            res = [np.insert(x, 0, 1) for x in res]
-            net = [np.matmul(x, self.weights[i]) for x in res]
+            net = [np.matmul(x, self.weights[i]) + self.bias_weights[i] for x in res]
             act_func = self.layers[i].activation_function
             if act_func == 'linear':
                 res = [linear(x) for x in net]
@@ -79,7 +84,7 @@ class MLPClassifier:
             if act_func == "softmax":
                 res = [softmax(n) for n in net]
             self.neuron_values[i] = res
-        self.prediction += list(self.neuron_values[self.num_of_layers - 1])
+        self.prediction = list(self.neuron_values[-1])
         return self.prediction
 
     def __backward(self, batch_idx):
@@ -87,48 +92,39 @@ class MLPClassifier:
         do backward propagation for each batch
         :param batch_idx: the current batch that is processed
         """
-        d_bias = []
+        self.__init_d_weights()
         # get the current batch size
         batch_size = self.__get_curr_batch_size(batch_idx)
 
-        # initialize a 2D numpy array, each row has the gradient for each neuron
-        # e.g.
-        # neuron        0  1   2
-        # [
-        # layer 1      [0, 0,  0],
-        # layer 2      [0, 0,  0],
-        # ]
-        # each element represents the sum of the gradient of the neuron from each x in the batch
-        gradient_sum = [np.zeros(self.layers[i].number_of_neurons, dtype=float) for i in range(self.num_of_layers)]
 
-        # todo: (@livia)
-        # save the bias sum to update bias as well
-
-        # todo: (@chow)
-        # calc error
 
         # for each X in the batch
         for i in range(batch_size):
             x_idx = batch_idx * batch_size + i  # x_idx is the index of the current input on the X_train
-            output_error_term = 0
-            # calc the gradient on each layer
-            # gradient is a 1D numpy array containing gradient for each neuron in the layer
+            d_k = np.zeros(0)
             for j in range(self.num_of_layers - 1, -1, -1):
                 if j == self.num_of_layers - 1:
-                    gradient = self.__calc_output_gradient(x_idx)
+                    delta = self.__calc_output_layer_delta(x_idx)
                 else:
-                    gradient = self.__calc_hidden_layer_gradient(i, j, output_error_term)
-                gradient_sum[j] += gradient
-                output_error_term = gradient
+                    delta = self.__calc_hidden_layer_delta(i, j, d_k)
 
-        # the mean gradient is the gradient sum divided by the batch size
-        mean_gradient = [gradient / batch_size for gradient in gradient_sum]
-        # calc the mean bias change(?)
+                x = self.X_train[x_idx] if j == 0 else self.neuron_values[j - 1][i]
+                self.d_weights[j] += np.array([[d * n for d in delta] for n in x])
+                self.d_bias_weights[j] += np.array(delta)
+                d_k = delta.reshape(delta.shape[0], 1)
 
-        # todo:
-        # update the weight (@livia)
-        # update the bias (@livia)
+        self.weights = [np.array(self.weights[k]) + np.array(self.d_weights[k]) * self.learning_rate for k in
+                        range(len(self.weights))]
+        self.bias_weights = [np.array(self.bias_weights[k]) + np.array(self.d_bias_weights[k]) * self.learning_rate for
+                             k in range(len(self.bias_weights))]
+        # todo: (@chow)
+        # calc error
+        # kayaknya somewhere disini
 
+    def __init_d_weights(self):
+        self.d_weights = [np.array([np.zeros(len(neuron_weight)) for neuron_weight in layer_weight])
+                          for layer_weight in self.weights]
+        self.d_bias_weights = [np.zeros(layer.number_of_neurons) for layer in self.layers]
 
     def __calc_output_diff(self, x_idx: int) -> np.ndarray:
         """
@@ -138,7 +134,7 @@ class MLPClassifier:
         output = self.prediction[x_idx]  # get the prediction
         return np.array([y - p for y, p in zip(y_train, output)])
 
-    def __calc_net_gradient(self, act_func: str, y: list) -> np.ndarray:
+    def __calc_act_function_derivative(self, act_func: str, y: list) -> np.ndarray:
         """
         :param y:  y is the output in a layer
 
@@ -149,15 +145,15 @@ class MLPClassifier:
 
         # todo: handle other functions (@jason)
 
-    def __calc_output_gradient(self, x_idx: int) -> np.ndarray:
+    def __calc_output_layer_delta(self, x_idx: int) -> np.ndarray:
         """
         :param x_idx:  the index of the current input on the X_train
         """
         # get the activation function for the last layer (output layer)
-        act_func = self.layers[self.num_of_layers - 1].activation_function  # get the activation function
-        return self.__calc_net_gradient(act_func, self.prediction[x_idx]) * (self.__calc_output_diff(x_idx))
+        act_func = self.layers[-1].activation_function  # get the activation function
+        return self.__calc_act_function_derivative(act_func, self.prediction[x_idx]) * self.__calc_output_diff(x_idx)
 
-    def __calc_hidden_layer_gradient(self, batch_idx, layer_idx: int, output_error_term: np.ndarray) -> np.ndarray:
+    def __calc_hidden_layer_delta(self, batch_idx, layer_idx: int, output_error_term: np.ndarray) -> np.ndarray:
         """
         :param output_error_term: a 1D array of the error term of each weight calculated from the layer after
         :param layer_idx: the index of the current layer
@@ -166,23 +162,13 @@ class MLPClassifier:
         hidden layer gradient = net gradient of the neuron values of current layer * the sum of weight * output error term
         """
         act_func = self.layers[layer_idx].activation_function
-        return (self.__calc_net_gradient(act_func, self.neuron_values[batch_idx][layer_idx]) *
-                (np.sum(np.transpose(self.weights[layer_idx]) * output_error_term)))
+        activation_func_derivative = self.__calc_act_function_derivative(act_func,
+                                                                         self.neuron_values[layer_idx][batch_idx])
+        return np.array(activation_func_derivative
+                        * np.matmul(self.weights[layer_idx + 1], output_error_term)[0])
 
     def __get_curr_batch_size(self, batch_idx):
         mod_res = len(self.X_train) % self.batch_size
         if batch_idx == self.batch_size - 1 and mod_res != 0:
             return mod_res
         return self.batch_size
-
-    def __initialize_layer_weight(self, num_of_source_neurons, num_of_target_neurons):
-        """
-        this function generates the weight for each layer
-
-        :param num_of_source_neurons: the number of neurons in the source layer
-        :param num_of_target_neurons: the number of neurons in the target layer
-
-        :return : a matrix of size num_of_source_neurons + 1 (1 for bias) * num_of_target neurons
-        with random values between -0.5 to 0.5
-        """
-        return np.random.rand(num_of_source_neurons + 1, num_of_target_neurons) - 0.5
