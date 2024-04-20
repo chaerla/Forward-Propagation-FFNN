@@ -42,4 +42,9 @@ print('YTest')
 print(y_test)
 
 mlp.fit(X_train, y_train)
-mlp.predict()
+# mlp.predict()
+
+# To decode the predicted result
+y_pred_encoded = [0]
+y_pred = preprocessor.decode_labels(y_pred_encoded)
+print(y_pred)

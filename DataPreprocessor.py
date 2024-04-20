@@ -73,3 +73,14 @@ class DataPreprocessor:
         y_test_encoded = self.encoder.transform(y_test)
 
         return y_train_encoded, y_test_encoded
+
+    def decode_labels(self, y_encoded: list):
+        """
+        Decodes the encoded labels back to the original categorical labels.
+
+        :param y_encoded: The encoded labels.
+
+        :return: The original categorical labels.
+        """
+        y_original = self.encoder.inverse_transform(y_encoded)
+        return y_original
