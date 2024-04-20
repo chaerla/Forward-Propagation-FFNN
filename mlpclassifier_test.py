@@ -1,3 +1,4 @@
+from DataPreprocessor import DataPreprocessor
 from MLPClassifier import FFNNLayer, MLPClassifier
 
 layers = [
@@ -32,3 +33,28 @@ y = [
 
 mlp.fit(x, y)
 mlp.predict()
+
+TARGET_COLUMN = "Species"
+
+preprocessor = DataPreprocessor("test_cases/iris.csv")
+X_train, X_test, y_train, y_test = preprocessor.preprocess(TARGET_COLUMN)
+
+print('XTrain')
+print(X_train)
+
+print('XTest')
+print(X_test)
+
+print('YTrain')
+print(y_train)
+
+print('YTest')
+print(y_test)
+
+mlp.fit(X_train, y_train)
+# mlp.predict()
+
+# To decode the predicted result
+y_pred_encoded = [0]
+y_pred = preprocessor.decode_labels(y_pred_encoded)
+print(y_pred)
