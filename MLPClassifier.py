@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from utils import sigmoid, relu, softmax, linear, sigmoid_net_gradient
+from utils import linear_net_gradient, relu_net_gradient, sigmoid, relu, softmax, linear, sigmoid_net_gradient, softmax_net_gradient
 
 
 class FFNNLayer:
@@ -138,7 +138,7 @@ class MLPClassifier:
         output = self.prediction[x_idx]  # get the prediction
         return np.array([y - p for y, p in zip(y_train, output)])
 
-    def __calc_net_gradient(self, act_func: str, y: list) -> np.ndarray:
+    def __calc_net_gradient(self, act_func: str, y: list, target) -> np.ndarray:
         """
         :param y:  y is the output in a layer
 
@@ -147,7 +147,18 @@ class MLPClassifier:
         if act_func == 'sigmoid':
             return np.array(sigmoid_net_gradient(y))
 
-        # todo: handle other functions (@jason)
+        if act_func == 'relu':
+            return np.array(relu_net_gradient(y))
+        
+        if act_func == 'linear':
+            return np.array(linear_net_gradient(y))
+        
+        if act_func == 'softmax':
+            if target is None:
+                raise Exception("Target is required for softmax")
+            return np.array(softmax_net_gradient(y, target))
+        else :
+            raise Exception("Activation function is unknown")
 
     def __calc_output_gradient(self, x_idx: int) -> np.ndarray:
         """
