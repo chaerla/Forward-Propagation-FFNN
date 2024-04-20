@@ -54,4 +54,4 @@ def softmax_net_gradient2(p, target):
     idx = target.index(max(target))
     gradient = p.copy()
     gradient[idx] = p[idx] - 1
-    return np.outer(gradient, p)
+    return gradient
