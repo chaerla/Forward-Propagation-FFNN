@@ -85,10 +85,9 @@ class MLPClassifier:
         Returns:
             Predicted outputs for each sample in X_test
         """
-        predictions = []
         current_inputs = np.array(X_test)
         for i in range(self.num_of_layers):
-            net = np.matmul(current_inputs, self.weights[i]) + self.bias_weights[i]
+            net = [np.matmul(x, self.weights[i]) + self.bias_weights[i] for x in current_inputs]
             act_func = self.layers[i].activation_function
             if act_func == 'linear':
                 res = [linear(x) for x in net]
@@ -99,8 +98,7 @@ class MLPClassifier:
             elif act_func == "softmax":
                 res = [softmax(n) for n in net]
             current_inputs = res
-        predictions = res.toList()
-        return predictions
+        return res
 
     def calculate_sse(self):
         sse = 0
