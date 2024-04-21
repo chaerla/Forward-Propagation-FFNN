@@ -178,10 +178,10 @@ class MLPClassifier:
             return np.array([x * (1-x) for x in y])
 
         elif act_func == 'relu':
-            return np.array([1 if x >= 0 else 0 for x in y])
+            return np.array([1 if x > 0 else 0 for x in y])
 
         elif act_func == 'linear':
-            return np.array([1 if x > 0 else 0 for x in y])
+            return np.array([1 for x in y])
 
         elif act_func == 'softmax':
             if target is None:
