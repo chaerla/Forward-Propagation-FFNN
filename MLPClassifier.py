@@ -133,8 +133,6 @@ class MLPClassifier:
         # get the current batch size
         batch_size = self.__get_curr_batch_size(batch_idx)
 
-
-
         # for each X in the batch
         for i in range(batch_size):
             d_k = np.zeros(0)
@@ -148,14 +146,17 @@ class MLPClassifier:
                 self.d_weights[j] += np.array([[d * n for d in delta] for n in x])
                 self.d_bias_weights[j] += np.array(delta)
                 d_k = delta.reshape(delta.shape[0], 1)
+        
+        self.__update_weights()
+        # todo: (@chow)
+        # calc error
+        # kayaknya somewhere disini
 
+    def __update_weights(self):
         self.weights = [np.array(self.weights[k]) + np.array(self.d_weights[k]) * self.learning_rate for k in
                         range(len(self.weights))]
         self.bias_weights = [np.array(self.bias_weights[k]) + np.array(self.d_bias_weights[k]) * self.learning_rate for
                              k in range(len(self.bias_weights))]
-        # todo: (@chow)
-        # calc error
-        # kayaknya somewhere disini
 
     def __init_d_weights(self):
         self.d_weights = [np.array([np.zeros(len(neuron_weight)) for neuron_weight in layer_weight])
