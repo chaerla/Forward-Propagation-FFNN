@@ -91,6 +91,17 @@ class MLPClassifier:
             current_inputs = res
         predictions = res.toList()
         return predictions
+    
+    def calculate_sse(self, final_weights):
+        sse = 0
+        for layer in range(len(final_weights)):
+            for neuron in range(len(final_weights[layer])):
+                expected = np.array(final_weights[layer][neuron])
+                result = self.bias_weights[layer] if neuron == 0 else self.weights[layer][neuron]
+                squared_error = (expected - result) ** 2
+                sse += np.sum(squared_error)
+        return sse
+
 
     def __forward(self, batch):
         start_idx = self.batch_size * batch
