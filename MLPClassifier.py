@@ -201,7 +201,7 @@ class MLPClassifier:
         # get the activation function for the last layer (output layer)
         act_func = self.layers[-1].activation_function  # get the activation function
         if act_func == 'softmax':
-            target = self.expected_output[x_idx].index(1)
+            target = self.expected_output[x_idx].index(max(self.expected_output[x_idx]))
             return -1 * self.__calc_act_function_derivative(act_func, self.prediction[x_idx], target) * self.__calc_output_diff(x_idx)
         return self.__calc_act_function_derivative(act_func, self.prediction[x_idx]) * self.__calc_output_diff(x_idx)
 
