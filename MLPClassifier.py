@@ -148,8 +148,6 @@ class MLPClassifier:
         
         self.weights = [np.array(self.weights[k]) + np.array(self.d_weights[k]) * self.learning_rate for k in
                         range(len(self.weights))]
-        print(self.bias_weights)
-        print(self.d_bias_weights)
         self.bias_weights = [np.array(self.bias_weights[k]) + np.array(self.d_bias_weights[k]) * self.learning_rate for
                              k in range(len(self.bias_weights))]
         # todo: (@chow)
