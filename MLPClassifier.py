@@ -54,15 +54,23 @@ class MLPClassifier:
         # the first neuron is the X inputs themselves
         self.neuron_values = [[None for _ in range(layer.number_of_neurons)] for layer in self.layers]
         num_iter = 0
-        while self.error_sum > self.error_threshold and num_iter < self.max_iter:
+        while num_iter < self.max_iter:
             num_of_batches = math.ceil(len(self.X_train) / self.batch_size)
+            err = 0
             for i in range(num_of_batches):
                 self.__forward(i)
                 self.__backward(i)
-                # todo: update error (@chow)
-                # jujur ga tau harusnya di bagian mana wkakwoka
+                err += self.__calculate_error(i)
+
+            # Update the average error for this iteration
+            self.error_sum = err / num_of_batches
+
+            # Check if the error is below the threshold
+            if self.error_sum <= self.error_threshold:
+                break
 
             num_iter += 1
+
         self.stopped_by = "max_iteration" if num_iter == self.max_iter else "error_threshold"
 
         if self.expected_weights:
@@ -103,7 +111,6 @@ class MLPClassifier:
                 squared_error = (expected - result) ** 2
                 sse += np.sum(squared_error)
         return sse
-
 
     def __forward(self, batch):
         start_idx = self.batch_size * batch
@@ -148,13 +155,29 @@ class MLPClassifier:
         
         self.weights = [np.array(self.weights[k]) + np.array(self.d_weights[k]) * self.learning_rate for k in
                         range(len(self.weights))]
-        print(self.bias_weights)
-        print(self.d_bias_weights)
         self.bias_weights = [np.array(self.bias_weights[k]) + np.array(self.d_bias_weights[k]) * self.learning_rate for
                              k in range(len(self.bias_weights))]
-        # todo: (@chow)
-        # calc error
-        # kayaknya somewhere disini
+
+    def __calculate_error(self, batch_idx):
+        """
+        Calculate the error for the current batch
+        :param batch_idx: the current batch that is processed
+        """
+        start_idx = self.batch_size * batch_idx
+        end_idx = start_idx + self.__get_curr_batch_size(batch_idx)
+        y_true = np.array(self.y_train[start_idx:end_idx])
+        y_pred = np.array(self.prediction)
+
+        # Get the activation function of the output layer
+        act_func = self.layers[-1].activation_function
+
+        # Calculate the error based on the activation function
+        if act_func in ['relu', 'sigmoid', 'linear']:
+            return 0.5 * np.sum((y_true - y_pred) ** 2)
+        elif act_func == 'softmax':
+            return -np.sum(y_true * np.log(y_pred))
+        else:
+            raise ValueError(f"Unsupported activation function: {act_func}")
 
     def __update_weights(self):
         self.weights = [np.array(self.weights[k]) + np.array(self.d_weights[k]) * self.learning_rate for k in
