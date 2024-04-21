@@ -41,7 +41,9 @@ class MLPClassifier:
         self.d_bias_weights = None
         self.expected_stopped_by = stopped_by
         self.expected_weights = expected_weights
+        self.expected_output = None
         self.stopped_by = None
+        self.current_inputs = None
 
     def fit(self, X_train, y_train):
         self.X_train = X_train
@@ -105,7 +107,9 @@ class MLPClassifier:
 
     def __forward(self, batch):
         start_idx = self.batch_size * batch
-        res = self.X_train[start_idx:start_idx + self.__get_curr_batch_size(batch)]
+        self.expected_output = self.y_train[start_idx:start_idx + self.__get_curr_batch_size(batch)]
+        self.current_inputs = self.X_train[start_idx:start_idx + self.__get_curr_batch_size(batch)]
+        res = self.current_inputs
         for i in range(self.num_of_layers):
             net = [np.matmul(x, self.weights[i]) + self.bias_weights[i] for x in res]
             act_func = self.layers[i].activation_function
@@ -119,7 +123,6 @@ class MLPClassifier:
                 res = [softmax(n) for n in net]
             self.neuron_values[i] = res
         self.prediction = list(self.neuron_values[-1])
-        return self.prediction
 
     def __backward(self, batch_idx):
         """
@@ -134,15 +137,14 @@ class MLPClassifier:
 
         # for each X in the batch
         for i in range(batch_size):
-            x_idx = batch_idx * batch_size + i  # x_idx is the index of the current input on the X_train
             d_k = np.zeros(0)
             for j in range(self.num_of_layers - 1, -1, -1):
                 if j == self.num_of_layers - 1:
-                    delta = self.__calc_output_layer_delta(x_idx)
+                    delta = self.__calc_output_layer_delta(i)
                 else:
                     delta = self.__calc_hidden_layer_delta(i, j, d_k)
 
-                x = self.X_train[x_idx] if j == 0 else self.neuron_values[j - 1][i]
+                x = self.current_inputs[i] if j == 0 else self.neuron_values[j - 1][i]
                 self.d_weights[j] += np.array([[d * n for d in delta] for n in x])
                 self.d_bias_weights[j] += np.array(delta)
                 d_k = delta.reshape(delta.shape[0], 1)
@@ -164,7 +166,7 @@ class MLPClassifier:
         """
         :param x_idx:  the index of the current input on the X_train
         """
-        y_train = self.y_train[x_idx]  # get the expected output of the x
+        y_train = self.expected_output[x_idx]  # get the expected output of the x
         output = self.prediction[x_idx]  # get the prediction
         return np.array([y - p for y, p in zip(y_train, output)])
 
@@ -186,9 +188,7 @@ class MLPClassifier:
         elif act_func == 'softmax':
             if target is None:
                 raise ValueError("Target is required for softmax gradient")
-            grad = np.copy(y)
-            grad[target] = grad[target] - 1
-            return grad
+            return np.array([-1 * (1-y[i]) if target == i else y[i] for i in range(len(y))])
 
         else:
             raise ValueError(f"Unknown activation function: {act_func}")
@@ -200,6 +200,9 @@ class MLPClassifier:
         """
         # get the activation function for the last layer (output layer)
         act_func = self.layers[-1].activation_function  # get the activation function
+        if act_func == 'softmax':
+            target = self.expected_output[x_idx].index(1)
+            return -1 * self.__calc_act_function_derivative(act_func, self.prediction[x_idx], target) * self.__calc_output_diff(x_idx)
         return self.__calc_act_function_derivative(act_func, self.prediction[x_idx]) * self.__calc_output_diff(x_idx)
 
     def __calc_hidden_layer_delta(self, batch_idx, layer_idx: int, output_error_term: np.ndarray) -> np.ndarray:
