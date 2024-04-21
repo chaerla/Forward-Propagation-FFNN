@@ -175,20 +175,24 @@ class MLPClassifier:
         :return : a 1D array which is the sigmoid gradient of the neurons in a layer
         """
         if act_func == 'sigmoid':
-            return np.array(sigmoid_net_gradient(y))
+            return np.array([x * (1-x) for x in y])
 
-        if act_func == 'relu':
-            return np.array(relu_net_gradient(y))
+        elif act_func == 'relu':
+            return np.array([1 if x >= 0 else 0 for x in y])
 
-        if act_func == 'linear':
-            return np.array(linear_net_gradient(y))
+        elif act_func == 'linear':
+            return np.arrat([1 if x > 0 else 0 for x in y])
 
-        if act_func == 'softmax':
+        elif act_func == 'softmax':
             if target is None:
-                raise Exception("Target is required for softmax")
-            return np.array(softmax_net_gradient(y, target))
-        else :
-            raise Exception("Activation function is unknown")
+                raise ValueError("Target is required for softmax gradient")
+            grad = np.copy(y)
+            grad[target] = grad[target] - 1
+            return grad
+
+        else:
+            raise ValueError(f"Unknown activation function: {act_func}")
+
 
     def __calc_output_layer_delta(self, x_idx: int) -> np.ndarray:
         """
