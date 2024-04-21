@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from utils import linear_net_gradient, relu_net_gradient, sigmoid, relu, softmax, linear, sigmoid_net_gradient, softmax_net_gradient
+from utils import sigmoid, relu, softmax, linear
 
 
 class FFNNLayer:
@@ -14,7 +14,7 @@ class FFNNLayer:
 
 
 class MLPClassifier:
-    def __init__(self, layers: list, learning_rate, error_threshold, max_iter, batch_size, weights):
+    def __init__(self, layers: list, learning_rate, error_threshold, max_iter, batch_size, weights, stopped_by, expected_weights = None):
         """
         :param layers: list of FFNNLayer to specify the activation function and num of neurons for each layers
         :param learning_rate: the learning rate
@@ -39,8 +39,9 @@ class MLPClassifier:
         self.num_of_batches = 0
         self.d_weights = None
         self.d_bias_weights = None
+        self.expected_stopped_by = stopped_by
+        self.expected_weights = expected_weights
         self.stopped_by = None
-
 
     def fit(self, X_train, y_train):
         self.X_train = X_train
@@ -60,11 +61,10 @@ class MLPClassifier:
                 # jujur ga tau harusnya di bagian mana wkakwoka
 
             num_iter += 1
-        
         self.stopped_by = "max_iteration" if num_iter == self.max_iter else "error_threshold"
 
-        print(self.weights)
-        print(self.bias_weights)
+        if self.expected_weights:
+            self.__print_final_weights()
 
     def predict(self, X_test):
         """Perform forward pass to make predictions on input X_test
@@ -76,7 +76,7 @@ class MLPClassifier:
             Predicted outputs for each sample in X_test
         """
         predictions = []
-        current_inputs = np.array(X_test) 
+        current_inputs = np.array(X_test)
         for i in range(self.num_of_layers):
             net = np.matmul(current_inputs, self.weights[i]) + self.bias_weights[i]
             act_func = self.layers[i].activation_function
@@ -91,7 +91,7 @@ class MLPClassifier:
             current_inputs = res
         predictions = res.toList()
         return predictions
-    
+
     def calculate_sse(self, final_weights):
         sse = 0
         for layer in range(len(final_weights)):
@@ -168,7 +168,7 @@ class MLPClassifier:
         output = self.prediction[x_idx]  # get the prediction
         return np.array([y - p for y, p in zip(y_train, output)])
 
-    def __calc_act_function_derivative(self, act_func: str, y: list, target) -> np.ndarray:
+    def __calc_act_function_derivative(self, act_func: str, y: list, target=None) -> np.ndarray:
         """
         :param y:  y is the output in a layer
 
@@ -181,7 +181,7 @@ class MLPClassifier:
             return np.array([1 if x > 0 else 0 for x in y])
 
         elif act_func == 'linear':
-            return np.array([1 for x in y])
+            return np.array([1 for _ in y])
 
         elif act_func == 'softmax':
             if target is None:
@@ -221,3 +221,22 @@ class MLPClassifier:
         if batch_idx == self.batch_size - 1 and mod_res != 0:
             return mod_res
         return self.batch_size
+
+    def __print_final_weights(self):
+        print("========= EXPECTED =========")
+        for weight in self.expected_weights:
+            print("[")
+            for neuron_weight in weight:
+                print("  ", neuron_weight)
+            print("], ")
+        print("STOPPED BY: ", self.expected_stopped_by)
+
+        print("========== ACTUAL ==========")
+
+        for i in range(len(self.weights)):
+            print("[")
+            print("  ", self.bias_weights[i])
+            for neuron_weight in self.weights[i]:
+                print("  ", neuron_weight)
+            print("], ")
+        print("STOPPED BY: ", self.stopped_by)
