@@ -39,7 +39,7 @@ class MLPClassifier:
         self.num_of_batches = 0
         self.d_weights = None
         self.d_bias_weights = None
-        # todo: rapiin sesusai input dari file + simpan stop by apa (@livia)
+        self.stopped_by = None
 
 
     def fit(self, X_train, y_train):
@@ -60,14 +60,37 @@ class MLPClassifier:
                 # jujur ga tau harusnya di bagian mana wkakwoka
 
             num_iter += 1
+        
+        self.stopped_by = "max_iteration" if num_iter == self.max_iter else "error_threshold"
+
         print(self.weights)
         print(self.bias_weights)
 
-    def predict(self):
+    def predict(self, X_test):
+        """Perform forward pass to make predictions on input X_test
+
+        Args:
+            X_test: Input data for prediction (list)
+
+        Returns:
+            Predicted outputs for each sample in X_test
         """
-        todo @livia
-        """
-        return 0
+        predictions = []
+        current_inputs = np.array(X_test) 
+        for i in range(self.num_of_layers):
+            net = np.matmul(current_inputs, self.weights[i]) + self.bias_weights[i]
+            act_func = self.layers[i].activation_function
+            if act_func == 'linear':
+                res = [linear(x) for x in net]
+            elif act_func == 'relu':
+                res = [relu(n) for n in net]
+            elif act_func == 'sigmoid':
+                res = [sigmoid(n) for n in net]
+            elif act_func == "softmax":
+                res = [softmax(n) for n in net]
+            current_inputs = res
+        predictions = res.toList()
+        return predictions
 
     def __forward(self, batch):
         start_idx = self.batch_size * batch
