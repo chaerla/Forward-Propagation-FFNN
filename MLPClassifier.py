@@ -143,7 +143,6 @@ class MLPClassifier:
                     delta = self.__calc_output_layer_delta(i)
                 else:
                     delta = self.__calc_hidden_layer_delta(i, j, d_k)
-
                 x = self.current_inputs[i] if j == 0 else self.neuron_values[j - 1][i]
                 self.d_weights[j] += np.array([[d * n for d in delta] for n in x])
                 self.d_bias_weights[j] += np.array(delta)
@@ -215,8 +214,10 @@ class MLPClassifier:
         act_func = self.layers[layer_idx].activation_function
         activation_func_derivative = self.__calc_act_function_derivative(act_func,
                                                                          self.neuron_values[layer_idx][batch_idx])
+
+        sum_d_net = [x[0] for x in np.matmul(self.weights[layer_idx + 1], output_error_term)]
         return np.array(activation_func_derivative
-                        * np.matmul(self.weights[layer_idx + 1], output_error_term)[0])
+                        * sum_d_net)
 
     def __get_curr_batch_size(self, batch_idx):
         mod_res = len(self.X_train) % self.batch_size
