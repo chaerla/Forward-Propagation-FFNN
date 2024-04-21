@@ -32,11 +32,11 @@ y = [
         ]
 
 mlp.fit(x, y)
-mlp.predict()
+# mlp.predict(x)
 
 TARGET_COLUMN = "Species"
 
-preprocessor = DataPreprocessor("test_cases/iris.csv")
+preprocessor = DataPreprocessor("test_cases_mlp/iris.csv")
 X_train, X_test, y_train, y_test = preprocessor.preprocess(TARGET_COLUMN)
 
 print('XTrain')
