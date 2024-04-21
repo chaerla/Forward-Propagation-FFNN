@@ -94,12 +94,12 @@ class MLPClassifier:
         predictions = res.toList()
         return predictions
 
-    def calculate_sse(self, final_weights):
+    def calculate_sse(self):
         sse = 0
-        for layer in range(len(final_weights)):
-            for neuron in range(len(final_weights[layer])):
-                expected = np.array(final_weights[layer][neuron])
-                result = self.bias_weights[layer] if neuron == 0 else self.weights[layer][neuron]
+        for layer in range(len(self.expected_weights)):
+            for neuron in range(len(self.expected_weights[layer])):
+                expected = np.array(self.expected_weights[layer][neuron])
+                result = self.bias_weights[layer] if neuron == 0 else self.weights[layer][neuron-1]
                 squared_error = (expected - result) ** 2
                 sse += np.sum(squared_error)
         return sse
@@ -133,8 +133,6 @@ class MLPClassifier:
         # get the current batch size
         batch_size = self.__get_curr_batch_size(batch_idx)
 
-
-
         # for each X in the batch
         for i in range(batch_size):
             d_k = np.zeros(0)
@@ -147,14 +145,22 @@ class MLPClassifier:
                 self.d_weights[j] += np.array([[d * n for d in delta] for n in x])
                 self.d_bias_weights[j] += np.array(delta)
                 d_k = delta.reshape(delta.shape[0], 1)
-
+        
         self.weights = [np.array(self.weights[k]) + np.array(self.d_weights[k]) * self.learning_rate for k in
                         range(len(self.weights))]
+        print(self.bias_weights)
+        print(self.d_bias_weights)
         self.bias_weights = [np.array(self.bias_weights[k]) + np.array(self.d_bias_weights[k]) * self.learning_rate for
                              k in range(len(self.bias_weights))]
         # todo: (@chow)
         # calc error
         # kayaknya somewhere disini
+
+    def __update_weights(self):
+        self.weights = [np.array(self.weights[k]) + np.array(self.d_weights[k]) * self.learning_rate for k in
+                        range(len(self.weights))]
+        self.bias_weights = [np.array(self.bias_weights[k]) + np.array(self.d_bias_weights[k]) * self.learning_rate for
+                             k in range(len(self.bias_weights))]
 
     def __init_d_weights(self):
         self.d_weights = [np.array([np.zeros(len(neuron_weight)) for neuron_weight in layer_weight])
