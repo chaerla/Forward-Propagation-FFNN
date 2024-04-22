@@ -1,0 +1,15 @@
+{
+    "final_weights": [
+        [
+            [0.232912, 0.060153],
+            [0.128841, 0.648495],
+            [0.837615, 0.231582]
+        ]
+    ],
+    "config": {
+        "layers": [{
+            "number_of_neurons": 2,
+            "activation_function": "sigmoid"
+        }]
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "final_weights": [
+        [
+            [0.166, 0.338, 0.153],
+            [0.502, 0.226, -0.789],
+            [0.214, -0.718, 0.427]
+        ]
+    ],
+    "config": {
+        "layers": [{
+            "number_of_neurons": 3,
+            "activation_function": "linear"
+        }]
+    }
+}
