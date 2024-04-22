@@ -1,5 +1,7 @@
 import math
 import numpy as np
+import os
+import json
 from utils import sigmoid, relu, softmax, linear
 
 
@@ -14,7 +16,7 @@ class FFNNLayer:
 
 
 class MLPClassifier:
-    def __init__(self, layers: list, learning_rate, error_threshold, max_iter, batch_size, weights, stopped_by, expected_weights = None):
+    def __init__(self, layers: list, weights, learning_rate=None, error_threshold=None, max_iter=None, batch_size=None,  stopped_by=None, expected_weights = None):
         """
         :param layers: list of FFNNLayer to specify the activation function and num of neurons for each layers
         :param learning_rate: the learning rate
@@ -127,6 +129,7 @@ class MLPClassifier:
             if act_func == "softmax":
                 res = [softmax(n) for n in net]
             self.neuron_values[i] = res
+        # print("pred", self.neuron_values[-1])    
         self.prediction = list(self.neuron_values[-1])
 
     def __backward(self, batch_idx):
@@ -142,7 +145,7 @@ class MLPClassifier:
         for i in range(batch_size):
             d_k = np.zeros(0)
             for j in range(self.num_of_layers - 1, -1, -1):
-                if j == self.num_of_layers - 1:
+                if j == self.num_of_layers - 1:       
                     delta = self.__calc_output_layer_delta(i)
                 else:
                     delta = self.__calc_hidden_layer_delta(i, j, d_k)
@@ -226,6 +229,7 @@ class MLPClassifier:
         """
         # get the activation function for the last layer (output layer)
         act_func = self.layers[-1].activation_function  # get the activation function
+    
         if act_func == 'softmax':
             return self.__calc_output_diff(x_idx)
         return self.__calc_act_function_derivative(act_func, self.prediction[x_idx]) * self.__calc_output_diff(x_idx)
@@ -248,7 +252,7 @@ class MLPClassifier:
 
     def __get_curr_batch_size(self, batch_idx):
         mod_res = len(self.X_train) % self.batch_size
-        if batch_idx == self.batch_size - 1 and mod_res != 0:
+        if batch_idx == self.num_of_batches - 1 and mod_res != 0:
             return mod_res
         return self.batch_size
 
@@ -270,3 +274,84 @@ class MLPClassifier:
                 print("  ", neuron_weight)
             print("], ")
         print("STOPPED BY: ", self.stopped_by)
+    
+    def calc_score(self, y_true, predictions):
+        """
+        Calculate the accuracy of predictions.
+
+        :param y_true: True labels.
+        :param predictions: Predictions from the model, as probabilities.
+        
+        :return: Accuracy as a float.
+        """
+        y_pred_indices = np.argmax(predictions, axis=1)
+        y_true_indices = np.argmax(y_true, axis=1)
+        
+        accuracy = np.mean(y_pred_indices == y_true_indices)
+        return accuracy
+    
+    def save_model(self, file_name, directory="model"):
+            """
+            Saves the model weights and configuration to model directory.
+            """
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            
+            model_data = {
+            "final_weights": [],
+            "config": {
+                "layers": [{"number_of_neurons": layer.number_of_neurons,
+                            "activation_function": layer.activation_function} for layer in self.layers],
+                }
+            }
+
+            for weights, bias in zip(self.weights, self.bias_weights):
+                bias_rounded = np.round(bias, 6)
+                weights_rounded = np.round(weights,6)
+                bias_reshaped = np.reshape(bias_rounded, (1, len(bias_rounded)))
+                integrated_layer_weights = np.vstack([bias_reshaped, weights_rounded])
+                model_data["final_weights"].append(integrated_layer_weights.tolist())
+
+            new_file_name = "model-" + os.path.basename(file_name)
+            # Save to JSON file
+            with open(os.path.join(directory, new_file_name), "w") as json_file:
+                json.dump(model_data, json_file)
+            
+            print("Model saved successfully to JSON.")
+
+    @classmethod
+    def load_model(cls, file_name, directory="model"):
+        """
+        Loads the model weights and configuration from model directory.
+        """
+        # Load configuration
+        with open(os.path.join(directory, file_name), "r") as json_file:
+            model_data = json.load(json_file)
+        
+        layers = [FFNNLayer
+                  (layer_conf["number_of_neurons"], layer_conf["activation_function"])
+                  for layer_conf in model_data["config"]["layers"]
+                ]
+        
+        #  Create new instance
+        classifier = cls(
+            layers=layers,
+            weights=[],  
+        )
+
+        classifier.weights = []
+        classifier.bias_weights = []
+        for integrated_weights in model_data["final_weights"]:
+            np_weights = np.array(integrated_weights)
+            classifier.bias_weights.append(np_weights[0, :])
+            classifier.weights.append(np_weights[1:, :])  
+        return classifier
+    
+    def printModel(self):
+        for i in range(len(self.weights)):
+            print("[")
+            print("  ", self.bias_weights[i])
+            for neuron_weight in self.weights[i]:
+                print("  ", neuron_weight)
+            print("], ")
+    
